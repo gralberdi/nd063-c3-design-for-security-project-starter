@@ -1,5 +1,37 @@
-Based on the architecture diagram, and the steps you have taken so far to upload data and access the application web service, identify at least 2 obvious poor practices as it relates to security.  Include justification.
+Based on the architecture diagram, and the steps you have taken so far to upload
+ data and access the application web service, identify at least 2 obvious poor 
+ practices as it relates to security.  Include justification.
 
 # Poor practice 1
+The most obvious poor practice related to security is to deploy WebService 
+Instance in public network, being accesible directly from Internet access This 
+is not necesary (it is a security risk) even this instance is behind a 
+Application Load Balancer. 
+
+Also, the Application Load Balancer is configured to HTTP on port 80 instead of 
+HTTPS on port 443 to encrypts the traffic to/from Internet to the web 
+application.
+
+The Security Group, WebAppSG, assigned to WebService Instance, expose 
+port 22 (SSH) and port 5000 (web application instance port listener) to the 
+Internet. Exposing SSH to Internet is a security risk.
+
+If WebService Instnace was deployed in private network, this seciruty issues
+ will be minimized.
+
+Another poor practice related to security is to use HTTP load balancer on 
+port 80 instead of HTTPS on port 443 to encrypts the traffic to/from Internet 
+to the web application.
 
 # Poor practice 2
+The InstanceRolePolicy-C3 defined in the InstanceRole assigned to the WebService 
+Instance by InstanceProfileRole violates the least privilege principle. It allow 
+any action to any S3 resource. 
+
+This allow the WebService Instance to grant access to the S3BucketRecipesSecret, 
+and it is a requirement that WebService Instance do not need access to 
+S3BucketRecipesSecret. Access to this bucket must be granted only to privileged 
+business users, and must not be accesible from web application.
+
+In addition, InstanceRolePolicy-C3, allow any action, and the WebService 
+Instance only need read action to S3BucketRecipesFree.

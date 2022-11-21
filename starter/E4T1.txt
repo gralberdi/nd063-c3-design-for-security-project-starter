@@ -2,4 +2,30 @@
 
 # Identify 2-3 changes that can be made to our environment to prevent an ssh brute force attack from the internet.
 
+- Allow ssh only from a specific subnet or one single IP address to access the 
+  WebService Instance, updating  the SG "WebAppSG" for this. 
+  Important to disable PasswordAuthentication in the SSH config.
+  
+- Move the web instance to a private subnet and allow ssh only from the public 
+  subnets in the VPC through a bastion host.
+
+- As a best practice, production servers should not have SSH enabled, so we 
+  should delete the SSH access to this instance: no key-pair used when launching 
+  the instance and deleting the SSH config(TCP port 22 from 0.0.0.0/0) in 
+  the WebAppSG.
+
 # Neither instance should have had access to the secret recipes bucket, in the even that instance API credentials were compromised how could we have prevented access to sensitive data.
+
+- Applying the Least Privilege Principle to the InstanceRolePolicy-C3 policy 
+  (from c3-app.yml):
+    - This policy apply to a Role that is used in the InstanceProfileRole that
+      is assigned to the Web Service Instance and Attack Instance
+    - This policy allow any action to any S3 resource.
+    - The actions needed to execute the task is read from the 
+      S3BucketRecipesFree. No other action is needed and no other S3 Resource is
+      needed
+    - We must restrict the policy to only act on the S3BucketRecipesFree and no 
+      other bucket, and only with read action. This way, neither of the two
+      instances could read from the secret recipes
+
+

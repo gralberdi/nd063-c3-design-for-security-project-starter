@@ -1,3 +1,132 @@
-Research and analyze which of the vulnerabilities appear to be related to the code that was deployed for the environment in this project.
+Research and analyze which of the vulnerabilities appear to be related to the 
+code that was deployed for the environment in this project. 
+
+
+From AWS Inspector
+
+The result of scan made by Inspector, show that port range 0 to 65535 is 
+reachable from Internet Gateway to Web Service Instance, specific ports with 
+security risk: port 22 (ssh) and port 80 (http).
+Also, Attack Instance is reachable on port 22 (ssh).
+This is a security risk.
+
+
+From AWS Config 
+
+This tool show several no compliant rules with impact in vulnerabilities in 
+deployed infraestructure for this project:
+
+Networking:
+
+- securityhub-ec2-instance-no-public-ip-255bdf86: Checks whether Amazon Elastic 
+  Compute Cloud (Amazon EC2) instances have a public IP association. The rule 
+  is NON_COMPLIANT if the publicIp field is present in the Amazon EC2 instance 
+  configuration item. This rule applies only to IPv4
+
+  This apply to Web Service Instance, because this instance is associate with 
+  Elastic IP (AppEIP in c3-app.yml)
+
+- securityhub-subnet-auto-assign-public-ip-disabled-b81c0e93: Checks if Amazon 
+  Virtual Private Cloud (Amazon VPC) subnets are assigned a public IP address. 
+  This rule is NON_COMPLIANT if Amazon VPC has subnets that are assigned a 
+  public IP address.
+
+  This rule apply both public subnets that do not have auto assign public IP to
+  false.
+
+- securityhub-alb-http-to-https-redirection-check-9a0f0b3c: Checks whether HTTP 
+  to HTTPS redirection is configured on all HTTP listeners of Application Load 
+  Balancers. The rule is NON_COMPLIANT if one or more HTTP listeners of 
+  Application Load Balancers do not have HTTP to HTTPS redirection configured.
+
+  This rule apply to c1-web-service-alb Application Load Balancer that is not 
+  configured to redirect traffic to secure HTTPS, no allowing encrypted traffic
+  in/out from web application.
+
+- securityhub-vpc-sg-open-only-to-authorized-ports-106f161d: This control checks 
+  whether the security groups allow unrestricted incoming traffic. The control 
+  fails if ports allow unrestricted traffic on ports other than 80 and 443, 
+  which are default values for parameter authorizedTcpPorts.
+
+  Both EC2 instances (webservice and attack) allow unrestricted traffic to ports
+  other tan 80 and 443: 22, and 5000 ports.
+
+S3 buckets
+
+- securityhub-s3-bucket-level-public-access-prohibited-e6106163: This control 
+  checks if Amazon S3 buckets have bucket level public access blocks applied. 
+  This control fails if any of the bucket level settings are set to "false" 
+  public: ignorePublicAcls, blockPublicPolicy, blockPublicAcls, 
+  restrictPublicBuckets.
+
+- securityhub-s3-bucket-ssl-requests-only-33ba0a80: Checks whether S3 buckets 
+  have policies that require requests to use Secure Socket Layer (SSL).
+
+- securityhub-s3-bucket-server-side-encryption-enabled-e8413d5b: Checks that 
+  your Amazon S3 bucket either has Amazon S3 default encryption enabled or that 
+  the S3 bucket policy explicitly denies put-object requests without server 
+  side encryption.
+
+  This S3 rules apply to S3BucketRecipesFree and S3BucketRecipesSecret S3 buckets
+  because PublicAccessBlockConfiguration block is missing.
+
+
+
+From AWS Security Hub
+
+CIS AWS Foundations Benchmark v1.2.0
+
+- CIS.4.1 - Ensure no security groups allow ingress from 0.0.0.0/0 to port 22.
+  
+  AttackInstanceSG and WebAppSG Seciruty Groups defined to Attack and WebService
+  instances allow incoming traffic form any IP to port 22. This is a security
+  risk that allow brute force password attack to gain access to this instances.
+
+AWS Foundational Security Best Practices v1.0.0
+
+- [EC2.19] Security groups should not allow unrestricted access to ports with 
+  high risk
+- [S3.8] S3 Block Public Access setting should be enabled at the bucket-level
+- [EC2.9] EC2 instances should not have a public IPv4 address
+- [EC2.15] EC2 subnets should not automatically assign public IP addresses
+- [S3.4] S3 buckets should have server-side encryption enabled
+- [S3.5] S3 buckets should require requests to use Secure Socket Layer
+- [ELBv2.1] Application Load Balancer should be configured to redirect all HTTP 
+  requests to HTTPS
+- [ELB.4] Application load balancer should be configured to drop http headers
+- [ELB.5] Application and Classic Load Balancers logging should be enabled
+- [ELB.6] Application Load Balancer deletion protection should be enabled
+
+
+Summary
+
+Main secuity vulnerabilities are derived from deploty Web Service Instance in 
+public network, assiging public IP addres, and exposed sensitive ports 
+like 22 (ssh) and 5000 (web service).
+
+Also is a risk not redirect traffic in port 80 to port 443 allowing encrypted 
+SSL traffic to the web application.
+
+Finally, at s3 buckets level, there are several warnings with impact in security
+vulnerabilities: no server-side encryption enabled, no require request to S3 
+to use SSL, and not blocked public access at bucket-level.
+
+
 
 Bonus - provide recommendations on how to remediate the vulnerabilities.
+
+Recommendations to be compliance with the CIS standards and AWS Foundational
+bests practices, we must:
+
+- Deploy web service instance in a private network
+- Restrict or disable access to ssh (port 22)
+- Redirect http traffic to https in Application Load Balancer
+- Apply security enforcement to S3 buckets: enable server-side encryption, 
+  force to use SSL traffic, and block punlic access at bucket-level.
+- Modify InstanceRolePolicy-C3, allow only read action to S3BucketRecipesFree. 
+  The application do not require other privileges to this bucket, and do not 
+  require any access to S3BucketRecipesSecret.
+
+To achive this recommendations we can follow AWS Security Hub recommnendations 
+links and apply to ASW Services throught Console or apply changes to .yaml 
+CloudFormation files.
