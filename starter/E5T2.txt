@@ -2,12 +2,54 @@
 
 ## Scan infrastructure as code templates
 
+Cfripper: Library and CLI security analyzer for AWS CloudFormation templates
+
 ### Example vulnerability
+
+As a part of the default rules for check vulnerabilities:
+
+GenericResourceFullWildcardPrincipalRule: Checks for any wildcard principal 
+defined in any statement. 
+
+Risk: It might allow other AWS identities to escalate privileges.
+Fix: Where possible, restrict the access to only the required resources. 
+For example, instead of Principal: "*", include a list of the roles that need 
+access.
 
 ##Scan AMI’s or containers for OS vulnerabilities
 
+For AMI's for OS vulnerabilities we have AWS Inspector:  is intended to 
+specifically analyze and report on vulnerabilities on EC2 instances. The type of 
+scanning that inspector provides is considered static scanning.
+
+For containers vulnerabilities we have Clair:  static analysis of vulnerabilities 
+in application containers.
+
+
 ### Example vulnerability
+
+AWS Inspector: 
+Port 22 is reachable from an Internet Gateway:
+On the instance i-0cdf6b917aa25ed6d, the port range 22-22 is reachable from the 
+InternetGateway igw-0c58bfff352be0ff2 from an attached ENI eni-0622ae75879d34dd3.
+
 
 ##Scan an AWS environment for cloud configuration vulnerabilities
 
+AWS Config: a service that enables you to assess, audit, and evaluate the 
+configurations of your AWS resources. Config continuously monitors and records 
+your AWS resource configurations and allows you to automate the evaluation of r
+ecorded configurations against desired configurations. With Config, you can 
+review changes in configurations and relationships between AWS resources, dive 
+into detailed resource configuration histories, and determine your overall 
+compliance against the configurations specified in your internal guidelines.
+
+
 ### Example vulnerability
+
+Non compliant rule securityhub-s3-bucket-server-side-encryption-enabled-e8413d5b:
+
+Checks that your Amazon S3 bucket either has Amazon S3 default encryption 
+enabled or that the S3 bucket policy 
+explicitly denies put-object requests without server side encryption.
+
